@@ -1,5 +1,34 @@
 ---
-title: "README"
+title: "Data Science Practical Project"
+author: "22761926"
+date: "2026-06-19"
 output: html_document
 ---
 
+# Overview
+
+This repository contains my solutions to the 4 practical exam questions. Each question has its own folder, with an accompanying code folder containing the functions used in that question's analysis. Functions are sourced automatically at the top of each R Markdown file using list.files() and walk(). Data was excluded from GitHub using .gitignore.
+
+# Question 1: Coffee Hub
+
+**Output:** PowerPoint slides (Question_1.pptx)
+
+The data came with an encoding issue. Some characters weren't displaying correctly when viewed in Excel. I used readr::guess_encoding() to check this properly. UTF-8 turned out to be the correct encoding all along; the "broken" characters were just an Excel display quirk, not a problem with the actual file. I wrote a Load_Coffee function that reads the file in quietly, suppressing the usual read_csv messages, using UTF-8 encoding.
+
+The origin_1 and origin_2 columns were a lot messier than expected. Between them they contained 614 and 357 unique values, mixing continents, countries and very specific growing districts (for example "Guji Zone" or "Hambela Wamena District"). The question specifically asks about region, so I didn't want to default to using the roaster's location (loc_country) instead, since that would really be answering a different question.
+
+I went through all the unique values in origin_1 by hand and pulled out the country names that actually appear in the data. This included a couple of misspellings I noticed along the way, such as "Ethopia" and "Columbia". I used this list to build an Extract_Region function that searches both origin columns for a known country and assigns it as the coffee's Region. About 40% of coffees couldn't be matched to a country this way, since their origin columns only contained a zone or district name with no country mentioned. These rows were grouped as "Other/Unclear" and excluded from the regional comparison. I see this as a limitation worth flagging rather than a problem to hide.
+
+For the analysis itself, I looked at the following:
+
+- Average rating by country of origin, excluding Other/Unclear
+- Average rating by roast strength
+- A simple value score, calculated as Rating divided by Cost per 100g, to identify good quality coffees at a reasonable price
+- Top-performing suppliers, requiring at least 3 reviewed coffees so that a single lucky rating couldn't skew the results
+- The flavour words from the student wordcloud, checking whether any were linked to higher or lower ratings
+
+Most of the wordcloud terms appeared in 80-99% of all coffee descriptions. Words used that often can't really distinguish a good coffee from an average one, so they didn't provide much of a useful signal. Two words were the exception. "Balanced" was linked to slightly higher ratings, while "velvety" was linked to lower ratings. I focused the final slide on just these two for that reason.
+
+One data quality issue I noticed but didn't fix: "Simon Hsieh Aroma Roast Coffees" appears twice in the supplier data with slightly different spelling and punctuation. This is likely the same roaster recorded inconsistently rather than two separate businesses.
+
+The final slide brings everything together into a recommendation covering country, roast, suppliers and value.

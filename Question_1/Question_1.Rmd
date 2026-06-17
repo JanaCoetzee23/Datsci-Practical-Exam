@@ -1,0 +1,100 @@
+---
+title: "Question 1: Coffee Sourcing Recommendations"
+author: "22761926"
+date: "`r Sys.Date()`"
+output: powerpoint_presentation
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+
+list.files('code/', full.names = T, recursive = T) %>% 
+    as.list() %>% walk(~source(.))
+
+Coffee <- Load_Coffee("../data/Coffee/Coffee.csv")
+
+Coffee <- Coffee %>% Extract_Region()
+
+```
+
+## Dataset Overview: 2095 Coffees, 422 Roasters, 19 Countries
+
+```{r}
+
+Dataset_Overview(Coffee) %>% knitr::kable(digits = 2)
+
+```
+
+## Best Countries by Rating
+
+```{r, fig.width=8, fig.height=5.5}
+
+Region_Rating_Plot(Coffee)
+
+```
+
+## Rating by Roast Strength
+
+```{r, fig.width=7, fig.height=5.5}
+
+Roast_Plot(Coffee)
+
+```
+
+## Best Value Coffees: Guatemala Leads
+
+```{r}
+Top_Value_Coffees(Coffee, Top_N = 10) %>% 
+  mutate(Value_Score = round(Value_Score, 1)) %>% 
+  head(5) %>% 
+  knitr::kable(digits = 2, 
+              col.names = c("Coffee", "Roaster", "Region", "Roast", 
+                           "Rating", "Cost/100g ($)", "Value Score"))
+```
+
+## Best Value Coffees: Guatemala Leads (Continued)
+
+```{r}
+Top_Value_Coffees(Coffee, Top_N = 10) %>% 
+  mutate(Value_Score = round(Value_Score, 1)) %>% 
+  tail(5) %>% 
+  knitr::kable(digits = 2, 
+              col.names = c("Coffee", "Roaster", "Region", "Roast", 
+                           "Rating", "Cost/100g ($)", "Value Score"))
+```
+
+## Flavour Descriptor Impact
+
+```{r, fig.width=8, fig.height=5}
+
+Keyword_Highlight_Plot(Coffee)
+
+```
+
+## Recommended Suppliers: Kakalove Cafe Combines Reliability and Value
+
+```{r}
+Top_Roasters(Coffee, Min_Coffees = 3, Top_N = 10) %>% 
+  knitr::kable(digits = 1, 
+              col.names = c("Roaster", "Avg Rating", "Avg Cost/100g ($)", "N Coffees"))
+```
+
+## Recommendations
+
+- **Country**: Ethiopia is the strongest, best-supported choice (high rating, 313 reviews). Kenya and Colombia are also reliable alternatives.
+
+- **Roast**: Light and Medium-Light roasts rate highest; ratings decline as roast darkens.
+
+- **Suppliers**: Kakalove Cafe offers the best mix of reliability, rating and affordability. Hula Daddy Kona Coffee is a strong premium option if budget allows.
+
+## Recommendations (Continued)
+
+- **Value**: Guatemalan coffees repeatedly appear among the best value picks - useful for margin-conscious stocking.
+
+- **Flavour profile**: "Balanced" in reviews is a positive signal; "velvety" is a mild cautionary flag.
