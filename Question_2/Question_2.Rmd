@@ -1,0 +1,133 @@
+---
+title: "Baby Naming Trends: Persistence and Pop-Culture Spikes"
+author: "22761926"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+
+options(dplyr.summarise.inform = F)
+
+list.files('code/', full.names = T, recursive = T) %>% 
+    as.list() %>% walk(~source(.))
+
+Baby_Names <- read_rds("../data/US_Baby_names/Baby_Names_By_US_State.rds")
+Top_100_Billboard <- read_rds("../data/US_Baby_names/charts.rds")
+HBO_titles <- read_rds("../data/US_Baby_names/HBO_titles.rds")
+HBO_credits <- read_rds("../data/US_Baby_names/HBO_credits.rds")
+
+National_Names <- National_Baby_Names(Baby_Names)
+Persistence_Results <- All_Years_Persistence(National_Names, N_Ahead = 3)
+
+```
+
+# Overview
+
+- We aggregated state-level baby name records to national totals by name, year and gender.
+- We tested whether popular baby names persist over time, and investigated specific cases of sudden naming spikes tied to cultural events.
+
+# Naming Persistence Over Time
+
+A value near 1 means the most popular names stayed largely the same three years later. Values closer to 0 indicate rapid turnover in naming preferences.
+
+```{r}
+
+Persistence_Results <- All_Years_Persistence(National_Names, N_Ahead = 3)
+Persistence_Plot(Persistence_Results)
+
+```
+
+- Naming persistence was very high and stable from 1910 through the 1950s, typically above 0.85.
+- The most dramatic dip in the entire dataset occurred for girls' names around 1965-1970, falling to roughly 0.3.
+- The late 1960s coincided with substantial social and cultural change in the United States, which may have accelerated turnover in naming preferences during that period.
+- Since 1990, persistence has been somewhat lower and more volatile than in the early 20th century. This partially supports the supervisor's theory, though the data does not show a clean or unprecedented decline, since a similarly large drop occurred decades earlier.
+
+# Cultural Influences on Naming
+
+We were asked to investigate the 1974 "Katina" naming spike, said to be linked to the TV show "Where the Heart Is".
+
+```{r}
+
+Name_Spike_Detector(National_Names, NameSel = "Katina", Sex = "F") %>% head(5) %>% knitr::kable()
+
+```
+
+- The data indicate the Katina surge actually occurred in 1972, two years before the supervisor's recollection.
+- The broader period the supervisor identified was correct, even if the exact year was slightly off.
+- Katina jumped from 48 to 2,726 births that year, a 57-fold increase.
+
+```{r}
+
+Check_Billboard_Presence(Top_100_Billboard, "Aaliyah") %>% knitr::kable()
+
+Name_Spike_Detector(National_Names, NameSel = "Aaliyah", Sex = "F") %>% head(5) %>% knitr::kable()
+
+```
+
+- Aaliyah spiked 282-fold in 1994, the same year the singer Aaliyah charted on Billboard for 42 weeks.
+
+```{r}
+
+Check_Billboard_Presence(Top_100_Billboard, "Whitney Houston") %>% head(8) %>% knitr::kable()
+
+```
+
+- Whitney rose sharply through 1985-1988.
+- This tracks closely with Whitney Houston's breakout chart years, where she charted between 39 and 61 weeks annually on Billboard.
+
+```{r}
+
+HBO_titles %>% filter(id == "tm118846") %>% select(title, release_year) %>% knitr::kable()
+
+```
+
+- Lyric spiked 64-fold in 1995, one year after the 1994 film "Jason's Lyric" was released.
+
+```{r, fig.width=9, fig.height=6}
+
+NamesSelected <- c("Aaliyah", "Jessica", "Katina", "Lyric", "Mary",
+                   "Tabitha", "Krystle", "Cataleya", "Tenley", "Whitney",
+                   "Linda", "Emma", "Ashley", "Madison")
+
+HighlightNames <- c("Aaliyah", "Katina", "Lyric", "Tabitha", "Krystle", 
+                    "Cataleya", "Tenley", "Whitney")
+
+Bubble_Plot_Names(National_Names, 
+                  NamesSelected = NamesSelected,
+                  HighlightNames = HighlightNames,
+                  Sex = "F")
+
+```
+
+- Several names show noticeable popularity spikes, including Tabitha, Krystle, Cataleya and Tenley.
+- Cultural influences are plausible explanations for each, but none of these could be formally verified using the supplementary datasets provided.
+- Even dramatic modern spikes like Aaliyah and Whitney never approach the sheer scale of classic names such as Mary or Linda in their peak decades.
+- Naming has become far more diverse over time, so percentage spikes look large in relative terms while absolute numbers stay comparatively modest.
+
+```{r}
+
+Name_Trend_Plot(National_Names, NamesSelected = c("Aaliyah", "Whitney", "Katina", "Lyric"), Sex = "F")
+
+```
+
+- Katina's spike is sharp and short-lived, rising and falling within a few years with almost no presence before or after.
+- Whitney's rise is more gradual, climbing steadily before accelerating through the mid-1980s.
+- Aaliyah shows two distinct growth phases, continuing to climb long after 1994, suggesting it became popular in its own right rather than purely as a tribute.
+- Lyric's growth is the most gradual of the four, with its real rise only becoming visible in the 2000s. This suggests the film connection may only partially explain the name's popularity, with other factors likely contributing later.
+
+# Summary
+
+- Naming persistence was very stable from 1910 through the 1950s, typically above 0.85 correlation between consecutive 3-year windows.
+- Since 1990, persistence has been somewhat lower and more volatile than in earlier decades. This partially supports the supervisor's theory, but a similarly large drop occurred for girls' names in the late 1960s, so the recent decline is not historically unprecedented.
+- The "Katina" spike happened in 1972, not 1974 as recalled. The name's rise and fall was sharp and short-lived.
+- Whitney's naming trend closely tracks Whitney Houston's chart career, rising steadily before accelerating through 1985-1988.
+- Aaliyah's naming spike in 1994 aligns with the singer's debut chart year, and the name continued growing well beyond that, suggesting lasting independent popularity rather than a short tribute.
+- Several plausible TV-driven naming spikes (Tabitha, Krystle, Cataleya, Tenley) could not be verified, as the relevant shows fall outside the HBO catalogue provided.
+- Naming has become far more diverse over time. Even the largest modern spikes never reach the absolute scale of classic names like Mary or Linda in their historical peaks.
