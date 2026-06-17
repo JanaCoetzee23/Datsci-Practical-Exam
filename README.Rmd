@@ -32,3 +32,15 @@ Most of the wordcloud terms appeared in 80-99% of all coffee descriptions. Words
 One data quality issue I noticed but didn't fix: "Simon Hsieh Aroma Roast Coffees" appears twice in the supplier data with slightly different spelling and punctuation. This is likely the same roaster recorded inconsistently rather than two separate businesses.
 
 The final slide brings everything together into a recommendation covering country, roast, suppliers and value.
+
+# Question 2: Baby Names
+
+**Output:** HTML report (Question_2.html)
+
+The baby names data came at state level, so I aggregated it up to national totals by name, year and gender before doing any analysis.
+
+For the persistence analysis, I compared each year's top 25 names to the top 25 names three years later, using Spearman rank correlation. Only names appearing in both years' top 25 lists were compared, since correlation needs paired observations. I mapped this across every year and both genders using expand_grid and map2_df. The resulting time series shows persistence was very stable through the early 20th century, with a much bigger dip in the late 1960s than anything seen after 1990. This suggests the supervisor's theory is only partially supported. Naming has become somewhat less persistent in recent decades, but the recent decline is not historically unprecedented.
+
+For the spike investigation, I built a function that calculates each name's year-on-year growth ratio, then checked which year showed the biggest jump. Running this on Katina confirmed the real spike was 1972, not 1974 as the supervisor remembered. I then scanned all names for similarly large spikes and cross-referenced a few candidates against the Billboard and HBO datasets provided. Aaliyah and Whitney both verified cleanly against Billboard chart data, lining up closely with the relevant singers' chart careers. In both cases I cross-checked the calculated spike ratios (Aaliyah's name jumped 282-fold in 1994, Whitney's followed a steadier multi-year rise through the late 1980s) against the singers' actual Billboard chart-week counts for those years to confirm the timing matched. Lyric matched against an HBO movie title released the year before its spike. A few other plausible candidates, such as Tabitha and Krystle, could not be verified, since the associated TV shows are not part of the HBO catalogue supplied.
+
+For the bubble plot, I plotted each name's peak year, with bubble size showing the peak count, to compare cultural spike names against steady classic names like Mary and Linda across different decades. I also added a simple trend line plot for the four verified spike names, since this showed the shape of each name's rise and fall in a way the single-point bubble plot could not.
