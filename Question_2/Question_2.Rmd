@@ -21,7 +21,6 @@ list.files('code/', full.names = T, recursive = T) %>%
 Baby_Names <- read_rds("../data/US_Baby_names/Baby_Names_By_US_State.rds")
 Top_100_Billboard <- read_rds("../data/US_Baby_names/charts.rds")
 HBO_titles <- read_rds("../data/US_Baby_names/HBO_titles.rds")
-HBO_credits <- read_rds("../data/US_Baby_names/HBO_credits.rds")
 
 National_Names <- National_Baby_Names(Baby_Names)
 Persistence_Results <- All_Years_Persistence(National_Names, N_Ahead = 3)
@@ -39,7 +38,6 @@ A value near 1 means the most popular names stayed largely the same three years 
 
 ```{r}
 
-Persistence_Results <- All_Years_Persistence(National_Names, N_Ahead = 3)
 Persistence_Plot(Persistence_Results)
 
 ```

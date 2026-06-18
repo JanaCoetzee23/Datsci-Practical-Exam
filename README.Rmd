@@ -1,64 +1,126 @@
 ---
-title: "Data Science Practical Project"
-author: "22761926"
-date: "2026-06-19"
-output: html_document
+output:
+  md_document:
+    variant: markdown_github
+editor_options: 
+  chunk_output_type: console
 ---
+
+```{r, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+options(dplyr.summarise.inform = F)
+
+```
 
 # Overview
 
 This repository contains my solutions to the 4 practical exam questions. Each question has its own folder, with an accompanying code folder containing the functions used in that question's analysis. Functions are sourced automatically at the top of each R Markdown file using list.files() and walk(). Data was excluded from GitHub using .gitignore.
 
+This README summarises the approach taken in each question and reproduces one key visual from each, sourced live from the relevant code folder. The full analysis, including all figures, tables and written findings, is contained in each question's own output file.
+
 # Question 1: Coffee Hub
 
 **Output:** PowerPoint slides (Question_1.pptx)
 
-The data came with an encoding issue. Some characters weren't displaying correctly when viewed in Excel. I used readr::guess_encoding() to check this properly. UTF-8 turned out to be the correct encoding all along; the "broken" characters were just an Excel display quirk, not a problem with the actual file. I wrote a Load_Coffee function that reads the file in quietly, suppressing the usual read_csv messages, using UTF-8 encoding.
+The data had an apparent encoding issue. Some characters displayed incorrectly in Excel. I checked this properly using readr::guess_encoding(), and found UTF-8 was correct all along. The "broken" characters were just an Excel display quirk, not a problem with the actual file.
 
-The origin_1 and origin_2 columns were a lot messier than expected. Between them they contained 614 and 357 unique values, mixing continents, countries and very specific growing districts (for example "Guji Zone" or "Hambela Wamena District"). The question specifically asks about region, so I didn't want to default to using the roaster's location (loc_country) instead, since that would really be answering a different question.
+The origin_1 and origin_2 columns proved far messier than expected, mixing continents, countries and specific growing districts. I went through the unique values by hand and built a function to extract a clean country from both columns, correcting a couple of misspellings along the way. About 40% of coffees couldn't be matched to a country this way. I grouped these as "Other/Unclear" and excluded them from the regional comparison, treating this as a limitation worth flagging rather than hiding.
 
-I went through all the unique values in origin_1 by hand and pulled out the country names that actually appear in the data. This included a couple of misspellings I noticed along the way, such as "Ethopia" and "Columbia". I used this list to build an Extract_Region function that searches both origin columns for a known country and assigns it as the coffee's Region. About 40% of coffees couldn't be matched to a country this way, since their origin columns only contained a zone or district name with no country mentioned. These rows were grouped as "Other/Unclear" and excluded from the regional comparison. I see this as a limitation worth flagging rather than a problem to hide.
+For the keyword analysis, I tested the flavour words from the student wordcloud against coffee ratings. Most appeared in 80-99% of all descriptions, too common to provide a useful signal. Two words stood out as genuine exceptions: "balanced" linked to slightly higher ratings, while "velvety" linked to lower ratings.
 
-For the analysis itself, I looked at the following:
+```{r, message=FALSE, warning=FALSE}
 
-- Average rating by country of origin, excluding Other/Unclear
-- Average rating by roast strength
-- A simple value score, calculated as Rating divided by Cost per 100g, to identify good quality coffees at a reasonable price
-- Top-performing suppliers, requiring at least 3 reviewed coffees so that a single lucky rating couldn't skew the results
-- The flavour words from the student wordcloud, checking whether any were linked to higher or lower ratings
+list.files('Question_1/code/', full.names = T, recursive = T) %>% 
+    as.list() %>% walk(~source(.))
 
-Most of the wordcloud terms appeared in 80-99% of all coffee descriptions. Words used that often can't really distinguish a good coffee from an average one, so they didn't provide much of a useful signal. Two words were the exception. "Balanced" was linked to slightly higher ratings, while "velvety" was linked to lower ratings. I focused the final slide on just these two for that reason.
+Coffee <- Load_Coffee("data/Coffee/Coffee.csv")
+Coffee <- Coffee %>% Extract_Region()
 
-One data quality issue I noticed but didn't fix: "Simon Hsieh Aroma Roast Coffees" appears twice in the supplier data with slightly different spelling and punctuation. This is likely the same roaster recorded inconsistently rather than two separate businesses.
+Keyword_Highlight_Plot(Coffee)
 
-The final slide brings everything together into a recommendation covering country, roast, suppliers and value.
+```
 
 # Question 2: Baby Names
 
 **Output:** HTML report (Question_2.html)
 
-The baby names data came at state level, so I aggregated it up to national totals by name, year and gender before doing any analysis.
+I aggregated the state-level baby name data up to national totals by name, year and gender before doing any analysis. For the persistence analysis, I compared each year's top 25 names to the top 25 three years later using Spearman rank correlation, mapped across every year and both genders. The result showed persistence was very stable through the early 20th century, with a much bigger dip in the late 1960s than anything seen after 1990. The supervisor's theory is only partially supported. Naming has become somewhat less persistent in recent decades, but the decline isn't historically unprecedented.
 
-For the persistence analysis, I compared each year's top 25 names to the top 25 names three years later, using Spearman rank correlation. Only names appearing in both years' top 25 lists were compared, since correlation needs paired observations. I mapped this across every year and both genders using expand_grid and map2_df. The resulting time series shows persistence was very stable through the early 20th century, with a much bigger dip in the late 1960s than anything seen after 1990. This suggests the supervisor's theory is only partially supported. Naming has become somewhat less persistent in recent decades, but the recent decline is not historically unprecedented.
+For the spike investigation, the supervisor's memory of a 1974 "Katina" spike was close but not quite exact. The real spike was 1972. I scanned all names for similarly large spikes and cross-referenced several candidates against the Billboard and HBO datasets provided. Aaliyah and Whitney both verified cleanly against Billboard, lining up with the relevant singers' chart careers. Lyric matched against an HBO movie title released the year before its spike. A few other plausible candidates couldn't be verified, since the associated shows aren't part of the HBO catalogue supplied.
 
-For the spike investigation, I built a function that calculates each name's year-on-year growth ratio, then checked which year showed the biggest jump. Running this on Katina confirmed the real spike was 1972, not 1974 as the supervisor remembered. I then scanned all names for similarly large spikes and cross-referenced a few candidates against the Billboard and HBO datasets provided. Aaliyah and Whitney both verified cleanly against Billboard chart data, lining up closely with the relevant singers' chart careers. In both cases I cross-checked the calculated spike ratios (Aaliyah's name jumped 282-fold in 1994, Whitney's followed a steadier multi-year rise through the late 1980s) against the singers' actual Billboard chart-week counts for those years to confirm the timing matched. Lyric matched against an HBO movie title released the year before its spike. A few other plausible candidates, such as Tabitha and Krystle, could not be verified, since the associated TV shows are not part of the HBO catalogue supplied.
+```{r, message=FALSE, warning=FALSE}
 
-For the bubble plot, I plotted each name's peak year, with bubble size showing the peak count, to compare cultural spike names against steady classic names like Mary and Linda across different decades. I also added a simple trend line plot for the four verified spike names, since this showed the shape of each name's rise and fall in a way the single-point bubble plot could not.
+list.files('Question_2/code/', full.names = T, recursive = T) %>% 
+    as.list() %>% walk(~source(.))
+
+Baby_Names <- read_rds("data/US_Baby_names/Baby_Names_By_US_State.rds")
+National_Names <- National_Baby_Names(Baby_Names)
+
+NamesSelected <- c("Aaliyah", "Jessica", "Katina", "Lyric", "Mary",
+                   "Tabitha", "Krystle", "Cataleya", "Tenley", "Whitney",
+                   "Linda", "Emma", "Ashley", "Madison")
+
+HighlightNames <- c("Aaliyah", "Katina", "Lyric", "Tabitha", "Krystle", 
+                    "Cataleya", "Tenley", "Whitney")
+
+Bubble_Plot_Names(National_Names, 
+                  NamesSelected = NamesSelected,
+                  HighlightNames = HighlightNames,
+                  Sex = "F")
+
+```
 
 # Question 3: Loans and Credit
 
 **Output:** Texevier PDF (Question_3.pdf)
 
-I started by checking the loan_status column, since this needed to become our default/non-default variable. Following the hint in the question, I classified Fully Paid as a non-default outcome and Charged Off, combined with the small separate Default category since they represent the same outcome, as a default. Current, Late and Grace Period loans were excluded from default rate calculations, since their final outcome isn't known yet.
+I classified loan_status into a clean default/non-default variable, treating Fully Paid as non-default and Charged Off, combined with the small Default category, as default. Current, Late and Grace Period loans were excluded, since their final outcome isn't known yet.
 
-I tested each of the Director's three beliefs directly against the data.
+I tested all three of the Director's beliefs directly. The first, that home owners and longer-employed borrowers default less, was well supported. The second, that states differ in default culture, was also well supported, with Texas itself sitting close to the middle of the range rather than standing out as unusual.
 
-The first belief, that home owners and people employed 10+ years default less on short-term loans, was well supported. Mortgage holders default least, renters default most, and longer employment history reduces default risk within both mortgage and homeowner groups. Employment length mattered less for renters specifically, where both groups defaulted at a similarly high rate.
+The third was more mixed. Credit grade predicts default extremely well, but the data has no age column at all, so the claim about younger individuals couldn't be tested. I also couldn't confirm that interest rates are clearly determined by occupation. I cleaned and grouped job titles into broad categories using keyword matching, but even after that effort, 47% of records stayed unclassified, and occupation showed only a small relationship with interest rate compared to credit grade's much stronger effect.
 
-The second belief, that states differ in their default culture, was also well supported. Default rates ranged from 10.6% in Maine to 23.6% in Arkansas. A loose regional pattern emerged too, with several Southern states clustering near the top and several Northeastern states near the bottom. Texas itself sits close to the middle of this range, at 19.2%, and is not unusual compared to other states.
+For the DTI question, I found a steady, consistent rise in default rate as DTI increases, with no single cliff edge, and presented a set of tolerance levels rather than one fixed cap. I also found DTI's relationship with default differs by state. Alabama and Maine have similar average DTI levels, but very different default rates.
 
-The third belief was more mixed. Credit grade predicts default extremely well, rising from 6.9% for Grade A to 57.3% for Grade G. I noticed the data also contains a seventh grade, G, beyond the A-F range mentioned in the belief, and included it since it followed the same pattern. The data has no age column at all, so the claim about younger individuals specifically could not be tested. I also couldn't confirm that interest rates are clearly determined by occupation. I cleaned and grouped the emp_title column into broad occupation categories using keyword matching, standardising case first and merging duplicate categories like "Manager" and "manager". Even after this effort, 47% of records couldn't be confidently classified and were kept as "Other/Unclassified". Occupation showed only a small relationship with interest rate compared to credit grade's much stronger effect.
+I chose Texevier's PDF output here, since the brief specifically called for a formal write-up. Getting this working required a small LaTeX fix for a Pandoc version mismatch, and some adjustment to figure sizes after a few plots initially ran off the page.
 
-For the DTI question, I binned debt-to-income ratio into 5% bands and found a steady, consistent rise in default rate as DTI increases, with no single obvious cliff edge. I presented this as a set of tolerance levels rather than one fixed number, since the right cap depends on how much risk the Institute is willing to accept. I also found that DTI's relationship with default differs by state. Alabama and Maine have similar average DTI levels, but very different default rates, suggesting a single national DTI cap may not suit every state equally well.
+```{r, message=FALSE, warning=FALSE}
 
-I chose Texevier's PDF output for this question, since the brief specifically called for a formal write-up. Getting this working required a small LaTeX fix, since the version of Pandoc on my machine produces a command the older Texevier template doesn't recognise. I added a short header-includes patch to the YAML to resolve this. I also had to adjust several figure widths and heights, since some plots initially ran off the page or created awkward blank space when LaTeX pushed an oversized image to the next page.
+list.files('Question_3/code/', full.names = T, recursive = T) %>% 
+    as.list() %>% walk(~source(.))
+
+Loan_Credit <- read_rds("data/Loan_Cred/loan_data.rds")
+Loan_Credit <- Loan_Status(Loan_Credit)
+
+Plot_Grade_Defaults(Loan_Credit)
+
+```
+
+# Question 4: Netflix
+
+**Output:** HTML report (Question_4.html)
+
+I worked with three datasets here: Titles and Credits, IMDb-sourced and structured similarly to the HBO data from Question 2, and a separate Netflix_movies CSV that turned out cleaner and more usable for the core analysis. I selected six countries to focus on: United States, India, United Kingdom, Spain, Nigeria and Japan.
+
+For movie length, India's films stood out clearly, averaging 127 minutes, well above every other country, fitting with the well-known convention of longer Bollywood runtimes. For content maturity, I grouped detailed ratings into three broader tiers, after excluding a handful of US rows where a duration value had landed in the rating column by mistake. Spain's content turned out to be the most mature-skewed of the six countries, while India's was the least.
+
+For the textual analysis, I searched for ten theme words across all six countries' movie descriptions. Relationship-driven themes like love, friend and family consistently outranked darker themes like murder, crime and revenge in every country, with India showing the strongest skew toward love and friend specifically.
+
+```{r, message=FALSE, warning=FALSE}
+
+list.files('Question_4/code/', full.names = T, recursive = T) %>% 
+    as.list() %>% walk(~source(.))
+
+Movie_Info <- read_csv("data/netflix/netflix_movies.csv")
+CountryList <- c("United States", "India", "United Kingdom", "Spain", "Nigeria", "Japan")
+df_movies <- Prepare_Movie_Data(Movie_Info, CountryList = CountryList)
+
+Theme_Words <- Movie_Theme_Words()
+Theme_Results <- Theme_Words %>% map_df(~Theme_Extractor(df_movies, ThemeWord = .))
+
+Plot_Theme_Comparison(Theme_Results, CountryList = CountryList)
+
+```
+
+For ratings, I joined IMDb and TMDB scores onto the country data. My first attempt joined on title alone, which created duplicate rows since 52 titles in the Titles dataset aren't unique. Joining on title and release year together fixed this. As a bonus, I compared genre popularity between Netflix and HBO, limiting the comparison to drama, comedy and documentary, the genres with clearly comparable naming once pluralization and terminology differences were resolved.
